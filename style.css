@@ -1,0 +1,54 @@
+/*
+Theme Name: Trainopro Neon
+Theme URI: http://localhost/wordpress/
+Author: Arshad
+Author URI: http://localhost/wordpress/
+Description: A modern dark tech WordPress theme designed for gyms and fitness centers. Features glassmorphism, neon blue accents, and parallax effects.
+Version: 1.0.0
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain: trainopro-neon
+*/
+
+/* 
+ * CSS Variables based on the Design System 
+ */
+:root {
+  --bg-dark: #0A0F1C;
+  --bg-secondary: #111827;
+  --accent-neon: #00D4FF;
+  --accent-glow: rgba(0, 212, 255, 0.6);
+  --text-main: #E5E7EB;
+  --text-muted: #9CA3AF;
+  
+  --font-heading: 'Sora', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(10px);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  color: #ffffff;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+}
