@@ -503,7 +503,7 @@ get_header();
         </div>
         <span class="wo-lbl">Overall</span>
         <div style="display:flex!important;gap:8px!important;width:100%!important">
-          <button class="wbtn wbtn-p" onclick="G.openWorkout()">View workout</button>
+          <a href="<?php echo home_url('/workout'); ?>" class="wbtn wbtn-p" style="text-decoration:none!important;display:flex!important;align-items:center!important;justify-content:center!important">View workout</a>
           <button class="wbtn wbtn-g" onclick="G.toast('Generating report…')">Report</button>
         </div>
       </div>
