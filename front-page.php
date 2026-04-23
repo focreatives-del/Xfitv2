@@ -363,6 +363,19 @@ get_header();
   .xdf-stats-in{grid-template-columns:repeat(2,1fr);}
   .xdf-bottom{flex-direction:column;gap:12px;text-align:center;}
 }
+/* ═══ PROFILE MODAL ═══ */
+#xd-profile-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999999;align-items:center;justify-content:center;backdrop-filter:blur(10px);}
+#xd-profile-modal-bg.open{display:flex;}
+#xd-profile-modal{background:#111114;border:1px solid rgba(255,255,255,.1);border-radius:28px;padding:32px;max-width:600px;width:94%;position:relative;font-family:'DM Sans',sans-serif;color:#fff;max-height:92vh;overflow-y:auto;}
+#xd-profile-modal h3{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:20px;color:#00d4ff;}
+.p-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.p-field{margin-bottom:16px;}
+.p-field label{display:block;font-size:11px;color:rgba(255,255,255,.5);margin-bottom:6px;text-transform:uppercase;letter-spacing:1px;font-weight:700;}
+.p-field input, .p-field select, .p-field textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:10px 14px;color:#fff;font-family:inherit;font-size:14px;}
+.p-field textarea{height:80px;resize:none;}
+.p-actions{display:flex;gap:12px;margin-top:20px;}
+.p-btn-save{flex:2;background:linear-gradient(135deg,#00d4ff,#00e676);border:none;border-radius:12px;padding:12px;color:#000;font-weight:800;cursor:pointer;font-family:'Syne',sans-serif;}
+.p-btn-cancel{flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px;color:#fff;font-weight:600;cursor:pointer;}
 </style>
 
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -470,23 +483,30 @@ get_header();
       <button class="pb pb-tr" onclick="G.toast('Workout updated!')" style="position:static!important">+</button>
     </div>
     <div class="wo-body">
-      <div class="m-list">
+      <div class="m-list" id="wo-muscle-list">
+        <?php
+        global $wpdb;
+        $wo_plans = $wpdb->get_results("SELECT id, plan_name, muscle_group, calories_est FROM {$wpdb->prefix}tp_workout_plans ORDER BY id DESC LIMIT 4");
+        $wo_colors = ['bpk','bbl','bgo','bgr'];
+        $wo_pcts = [82,68,74,60];
+        if($wo_plans):
+          foreach($wo_plans as $wi => $wp):
+            $wc = $wo_colors[$wi % 4];
+            $wpct = $wo_pcts[$wi % 4];
+        ?>
         <div>
-          <div class="m-head"><span class="m-name">Chest</span><span class="m-up">Uptime: 99.99%</span></div>
-          <div class="bar-bg"><div class="bar-f bpk" data-w="82%"></div></div>
+          <div class="m-head">
+            <span class="m-name"><?php echo esc_html($wp->muscle_group ?: $wp->plan_name); ?></span>
+            <span class="m-up"><?php echo (int)$wp->calories_est; ?> kcal</span>
+          </div>
+          <div class="bar-bg"><div class="bar-f <?php echo $wc; ?>" data-w="<?php echo $wpct; ?>%"></div></div>
         </div>
+        <?php endforeach; else: ?>
         <div>
-          <div class="m-head"><span class="m-name">Shoulder</span><span class="m-up">Uptime: 99.99%</span></div>
-          <div class="bar-bg"><div class="bar-f bbl" data-w="68%"></div></div>
+          <div class="m-head"><span class="m-name">No plans yet</span><span class="m-up">Add plans</span></div>
+          <div class="bar-bg"><div class="bar-f bpk" data-w="0%"></div></div>
         </div>
-        <div>
-          <div class="m-head"><span class="m-name">Triceps</span><span class="m-up">Uptime: 99.99%</span></div>
-          <div class="bar-bg"><div class="bar-f bgo" data-w="74%"></div></div>
-        </div>
-        <div>
-          <div class="m-head"><span class="m-name">Biceps</span><span class="m-up">Uptime: 99.99%</span></div>
-          <div class="bar-bg"><div class="bar-f bgr" data-w="60%"></div></div>
-        </div>
+        <?php endif; ?>
       </div>
       <div class="wo-r">
         <div class="dn" style="width:148px!important;height:148px!important;display:inline-flex!important">
@@ -503,8 +523,8 @@ get_header();
         </div>
         <span class="wo-lbl">Overall</span>
         <div style="display:flex!important;gap:8px!important;width:100%!important">
-          <a href="<?php echo home_url('/workout'); ?>" class="wbtn wbtn-p" style="text-decoration:none!important;display:flex!important;align-items:center!important;justify-content:center!important">View workout</a>
-          <button class="wbtn wbtn-g" onclick="G.toast('Generating report…')">Report</button>
+          <a href="<?php echo home_url("/index.php/workout/?plan_id=current"); ?>" class="wbtn wbtn-p" style="text-decoration:none!important;display:flex!important;align-items:center!important;justify-content:center!important">View workout</a>
+          <button class="wbtn wbtn-g" onclick="G.downloadReport()">Report</button>
         </div>
       </div>
     </div>
@@ -905,6 +925,71 @@ get_header();
   </div>
 </div>
 
+<!-- ═══ PROFILE MODAL ═══ -->
+<div id="xd-profile-modal-bg">
+  <div id="xd-profile-modal">
+    <button id="xd-modal-close" onclick="G.closeProfile()">&#x2715;</button>
+    <h3>&#x1F464; My Profile</h3>
+    <form id="profile-form" onsubmit="event.preventDefault(); G.saveProfile();">
+      <div class="p-form-grid">
+        <div class="p-field">
+          <label>Full Name</label>
+          <input type="text" id="p-name" required>
+        </div>
+        <div class="p-field">
+          <label>Email</label>
+          <input type="email" id="p-email" required>
+        </div>
+        <div class="p-field">
+          <label>Mobile</label>
+          <input type="text" id="p-mobile">
+        </div>
+        <div class="p-field">
+          <label>Age</label>
+          <input type="number" id="p-age">
+        </div>
+        <div class="p-field">
+          <label>Gender</label>
+          <select id="p-gender">
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="p-field">
+          <label>Blood Group</label>
+          <input type="text" id="p-blood" placeholder="e.g. O+">
+        </div>
+        <div class="p-field">
+          <label>Current Weight (kg)</label>
+          <input type="number" id="p-weight" step="0.1">
+        </div>
+        <div class="p-field">
+          <label>Ideal Weight (kg)</label>
+          <input type="number" id="p-ideal" step="0.1">
+        </div>
+        <div class="p-field" style="grid-column: 1 / -1;">
+          <label>Fitness Goal</label>
+          <select id="p-goal">
+            <option value="Weight Loss">Weight Loss</option>
+            <option value="Muscle Gain">Muscle Gain</option>
+            <option value="Endurance">Endurance</option>
+            <option value="General Health">General Health</option>
+          </select>
+        </div>
+        <div class="p-field" style="grid-column: 1 / -1;">
+          <label>Health Notes / Problems</label>
+          <textarea id="p-health"></textarea>
+        </div>
+      </div>
+      <div class="p-actions">
+        <button type="button" class="p-btn-cancel" onclick="G.closeProfile()">Cancel</button>
+        <button type="submit" class="p-btn-save">Save Profile Settings</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div id="xd-toast"></div>
 
 <!-- ═══ FOOTER ═══ -->
@@ -1008,8 +1093,30 @@ const G = {
     restUrl: '/wp-json/trainopro/v1/',
   },
 
-  init() {
+  async init() {
     this.s.workoutOverall = Math.round((this.s.wChest + this.s.wShoulder + this.s.wTriceps + this.s.wBiceps) / 4);
+    
+    // Fetch real data on init
+    try {
+      const [profile, summary] = await Promise.all([
+        fetch(this.s.restUrl + 'profile').then(r => r.json()),
+        fetch(this.s.restUrl + 'daily-summary').then(r => r.json())
+      ]);
+
+      if (profile && profile.user_id) {
+        this.s.weight = parseFloat(profile.current_weight) || this.s.weight;
+        this.s.height = 175; // Logic to handle height if needed
+      }
+
+      if (summary) {
+        this.s.waterI  = parseFloat(summary.water_ml) / 1000 || 0;
+        this.s.cal     = parseInt(summary.calories) || 0;
+        this.s.protein = parseFloat(summary.protein) || 0;
+        this.s.carbs   = parseFloat(summary.carbs) || 0;
+        this.s.fat     = parseFloat(summary.fat) || 0;
+      }
+    } catch (e) { console.error('Data fetch failed', e); }
+
     this.s.health = this.calcHealth();
     this.render();
     setTimeout(() => {
@@ -1019,9 +1126,19 @@ const G = {
     }, 700);
   },
 
-  addWater(ml) {
+  async addWater(ml) {
     const L = ml / 1000;
     this.s.waterI = Math.min(parseFloat((this.s.waterI + L).toFixed(2)), this.s.waterG + 0.5);
+    
+    // Persistence
+    try {
+      await fetch(this.s.restUrl + 'log-metric', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': wpApiSettings.nonce },
+        body: JSON.stringify({ metric_type: 'water', metric_value: ml })
+      });
+    } catch (e) { console.error('Water save failed', e); }
+
     // Connections
     this.s.energy    = Math.min(100, Math.round(this.s.energy + (ml / 250) * 5));
     this.s.calBurned = Math.min(1800, this.s.calBurned + Math.round(ml / 12));
@@ -1079,11 +1196,25 @@ const G = {
   },
 
   calcBMIBtn() {
-    const w = parseFloat(document.getElementById('bmi-w-inp')?.value) || 75;
-    const h = parseFloat(document.getElementById('bmi-h-inp')?.value) || 175;
+    const w = parseFloat(document.getElementById('bmi-w-inp')?.value) || this.s.weight;
+    const h = parseFloat(document.getElementById('bmi-h-inp')?.value) || this.s.height;
     this.calcBMI(w, h);
     this.toast('BMI: ' + this.s.bmi + ' — ' + this.s.bmiCat);
     this.persistProfile();
+  },
+
+  downloadReport() {
+    this.toast('📊 Generating your health report...');
+    const data = `TrainoPro Health Report\nDate: ${new Date().toLocaleDateString()}\n\nWeight: ${this.s.weight}kg\nBMI: ${this.s.bmi} (${this.s.bmiCat})\nWater: ${this.s.waterI}L\nCalories: ${this.s.cal} consumed\nProtein: ${this.s.protein}g\nHealth Score: ${this.s.health}/100\n\nKeep crushing it!`;
+    const blob = new Blob([data], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `TrainoPro_Report_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    this.toast('✅ Report downloaded!');
   },
 
   bmiFromWeight() {
@@ -1100,6 +1231,57 @@ const G = {
   openWorkout() {
     document.getElementById('xd-work-modal-bg').classList.add('open');
     this.fetchTodayPlan();
+  },
+
+  openProfile() {
+    document.getElementById('xd-profile-modal-bg').classList.add('open');
+    // Pre-fill form from state
+    document.getElementById('p-name').value   = this.s.fullName   || '';
+    document.getElementById('p-email').value  = this.s.email      || '';
+    document.getElementById('p-mobile').value = this.s.mobile     || '';
+    document.getElementById('p-age').value    = this.s.age        || '';
+    document.getElementById('p-gender').value = this.s.gender     || 'Male';
+    document.getElementById('p-blood').value  = this.s.bloodGroup || '';
+    document.getElementById('p-weight').value = this.s.weight     || '';
+    document.getElementById('p-ideal').value  = this.s.idealWeight  || '';
+    document.getElementById('p-goal').value   = this.s.goal       || 'Muscle Gain';
+    document.getElementById('p-health').value = this.s.healthNotes || '';
+  },
+
+  closeProfile() {
+    document.getElementById('xd-profile-modal-bg').classList.remove('open');
+  },
+
+  async saveProfile() {
+    const data = {
+      full_name:      document.getElementById('p-name').value,
+      email:          document.getElementById('p-email').value,
+      mobile:         document.getElementById('p-mobile').value,
+      age:            parseInt(document.getElementById('p-age').value),
+      gender:         document.getElementById('p-gender').value,
+      blood_group:    document.getElementById('p-blood').value,
+      current_weight: parseFloat(document.getElementById('p-weight').value),
+      ideal_weight:   parseFloat(document.getElementById('p-ideal').value),
+      goal:           document.getElementById('p-goal').value,
+      health_notes:   document.getElementById('p-health').value,
+    };
+
+    try {
+      const resp = await fetch(this.s.restUrl + 'profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': wpApiSettings.nonce },
+        body: JSON.stringify(data)
+      });
+      const res = await resp.json();
+      if (res.success) {
+        this.toast('✅ Profile updated successfully!');
+        this.s.weight = data.current_weight;
+        this.s.idealWeight = data.ideal_weight;
+        this.s.goal = data.goal;
+        this.render();
+        this.closeProfile();
+      }
+    } catch (e) { this.toast('❌ Failed to save profile.'); }
   },
 
   closeWorkout() {
@@ -1341,11 +1523,27 @@ const G = {
     }, 320);
   },
 
-  confirmMeal() {
+  async confirmMeal() {
     const cal   = parseInt(document.getElementById('ai-cal-inp')?.value)  || 0;
     const prot  = parseInt(document.getElementById('ai-prot-inp')?.value) || 0;
     const carbs = parseInt(document.getElementById('ai-carb-inp')?.value) || 0;
     const fat   = parseInt(document.getElementById('ai-fat-inp')?.value)  || 0;
+    
+    // Persistence
+    try {
+      await fetch(this.s.restUrl + 'log-metric', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': wpApiSettings.nonce },
+        body: JSON.stringify({ 
+          metric_type: 'meal', 
+          metric_value: cal,
+          protein: prot,
+          carbs: carbs,
+          fat: fat
+        })
+      });
+    } catch (e) { console.error('Meal save failed', e); }
+
     this.addMeal(cal, prot, carbs, fat);
     this.closeAI();
   },
@@ -1510,9 +1708,75 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       G.closeAI();
       G.closeWorkout();
+      G.closeProfile();
     }
   });
+
+  // Profile button click
+  const profBtn = document.querySelector('.btn-profile');
+  if (profBtn) {
+    profBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      G.openProfile();
+    });
+  }
 });
 </script>
 
 <?php get_footer(); ?>
+<script>
+// Load real plugin data into Today Workout widget
+document.addEventListener('DOMContentLoaded', function() {
+  fetch('/wp-json/trainopro/v1/plans')
+  .then(function(r){ return r.json(); })
+  .then(function(plans) {
+    if (!plans || plans.length === 0) return;
+    var list = document.querySelector('.m-list');
+    if (!list) return;
+    var colors = ['bpk','bbl','bgo','bgr','bcy','bpu'];
+    var widths = [82,68,74,60,70,65];
+    var html = '';
+    plans.slice(0,4).forEach(function(plan, i) {
+      var mg = plan.muscle_group || plan.plan_name || 'Workout';
+      // Link to the specific muscle workout page with plan_id
+      var url = '/index.php/muscle-workout/?plan_id=' + plan.id;
+      var exCount = (plan.exercise_list||[]).length;
+      var pct = widths[i % widths.length];
+      html += '<a href="'+url+'" style="text-decoration:none!important; color:inherit!important; display:block!important;">'
+        + '<div>'
+        + '<div class="m-head">'
+        + '<span class="m-name">'+mg+'</span>'
+        + '<span class="m-up">'+exCount+' exercises</span>'
+        + '</div>'
+        + '<div class="bar-bg"><div class="bar-f '+colors[i%colors.length]+'" data-w="'+pct+'%" style="width:'+pct+'%!important"></div></div>'
+        + '</div>'
+        + '</a>';
+    });
+    list.innerHTML = html;
+    // update overall
+    var overall = Math.round(widths.slice(0, plans.length).reduce(function(a,b){return a+b;},0) / Math.min(plans.length,4));
+    var el = document.getElementById('xd-wo-overall');
+    if (el) el.textContent = overall;
+    // update calories
+    var totalCal = plans.reduce(function(a,p){ return a + (parseInt(p.calories_est)||0); }, 0);
+    if (totalCal > 0) G.s.calBurned = totalCal;
+  }).catch(function(){});
+
+  // Load today plan stats
+  fetch('/wp-json/trainopro/v1/today-plan')
+  .then(function(r){ return r.json(); })
+  .then(function(data) {
+    if (data && data.calories_est) {
+      G.s.calBurned = parseInt(data.calories_est) || G.s.calBurned;
+      G.s.workoutBurn = parseInt(data.calories_est) || G.s.workoutBurn;
+      G.render();
+      
+      // Update View Workout button to link to the specific plan ID
+      var vwb = document.querySelector('.wbtn-p');
+      if (vwb && data.id) {
+        vwb.href = '/index.php/muscle-workout/?plan_id=' + data.id;
+      }
+    }
+  }).catch(function(){});
+});
+</script>

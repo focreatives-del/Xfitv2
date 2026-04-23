@@ -20,11 +20,11 @@
 
             <nav id="site-navigation" class="main-navigation">
                 <ul>
-                    <li><a href="#" class="active">Home</a></li>
-                    <li><a href="#">About us</a></li>
-                    <li><a href="#">Workout plans</a></li>
-                    <li><a href="#">Diet plans</a></li>
-                    <li><a href="#">My program</a></li>
+                    <li><a href="<?php echo home_url('/'); ?>" class="active">Home</a></li>
+                    <li><a href="<?php echo home_url('/about-us'); ?>">About us</a></li>
+                    <li><a href="<?php echo home_url('/index.php/workout/'); ?>">Workout plans</a></li>
+                    <li><a href="<?php echo home_url('/diet-plan'); ?>">Diet plans</a></li>
+                    <li><a href="<?php echo home_url('/my-workout-plan'); ?>">My program</a></li>
                 </ul>
             </nav>
 
