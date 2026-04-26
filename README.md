@@ -15,4 +15,4 @@ This is a premium gym dashboard integrated with the TrainoPro Workout Manager pl
 - `style.css`: The main design system.
 - `front-page.php`: The dashboard logic.
 - `plugin-files/`: The backend plugin code.
-- `index.html`: Static design preview for GitHub Pages.
+- `preview.html`: Static design preview for GitHub Pages.
